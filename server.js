@@ -16,13 +16,13 @@ app.use(methodOverride('_method'));
 
 dotenv.config({ path: './config.env' });
 
-// ==========SHIT STARTS HERE
 const connectDB = require('./db');
 connectDB();
+const Project = require('./model/Project');
 
+// ==========SHIT STARTS HERE
 let conn = mongoose.connection;
 let gfs;
-let mygfs;
 
 conn.once('open', () => {
   // Init stream
@@ -111,6 +111,54 @@ app.delete('/files/:id', (req, res) => {
 
 
 // =======SHIT ENDS HERE
+
+app.post('/project', async (req, res) => {
+  const project = await Project.create(req.body);
+  return res.status(201).json({ success: true, data: project });
+})
+
+app.get('/project', async (req, res) => {
+  const projects = await Project.find();
+  return res.status(201).json({ success: true, data: projects });
+})
+
+app.put('/project/:id/upload', upload.single('file'), async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  if(!project){
+    return res.status(404).json({ success: false, msg: 'No such project found' })
+  }
+
+  project.image = req.file.filename;
+
+  await project.save();
+
+  return res.status(201).json({ success: true, data: project })
+})
+
+app.get('/project/:id/image', async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  gfs.files.findOne({ filename: project.image }, (err, file) => {
+    // Check if file
+    if (!file || file.length === 0) {
+      return res.status(404).json({
+        err: 'No file exists'
+      });
+    }
+
+    // Check if image
+    if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
+      // Read output to browser
+      const readstream = gfs.createReadStream(file.filename);
+      readstream.pipe(res);
+    } else {
+      res.status(404).json({
+        err: 'Not an image'
+      });
+    }
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
