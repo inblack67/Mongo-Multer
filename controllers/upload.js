@@ -5,5 +5,5 @@ const Grid = require('gridfs-stream')
 
 
 exports.fileUpload = (req, res) => {
-    res.send('hello');
+    res.status(200).json({ success: true, file: req.file })
 }
