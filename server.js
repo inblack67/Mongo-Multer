@@ -136,10 +136,14 @@ app.put('/project/:id/upload', upload.single('file'), async (req, res) => {
   return res.status(201).json({ success: true, data: project })
 })
 
-app.get('/project/:id/image', async (req, res) => {
+app.get('/project/:id/image/:filename', async (req, res) => {
   const project = await Project.findById(req.params.id);
 
-  gfs.files.findOne({ filename: project.image }, (err, file) => {
+  if(!project){
+    return res.status(404);
+  }
+
+  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
     // Check if file
     if (!file || file.length === 0) {
       return res.status(404).json({
@@ -159,6 +163,7 @@ app.get('/project/:id/image', async (req, res) => {
     }
   });
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
