@@ -14,8 +14,8 @@ const ProjectSchema = mongoose.Schema({
         required: true,
     },
     image: {
-        type: String,
-        default: 'no-image'
+        type: Object,
+        default: {}
     },
     createdAt: {
         type: Date,

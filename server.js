@@ -59,58 +59,7 @@ const storage = new GridFsStorage({
 
 const upload = multer({ storage });
 
-app.post('/upload', upload.single('file'), (req, res) => {
-    res.status(201).json({ success: true, data: req.file })
-})
-
-app.get('/upload', (req, res) => {
-  gfs.files.find().toArray((err, files) => {
-    // Check if files
-    if (!files || files.length === 0) {
-      return res.status(404).json({
-        err: 'No files exist'
-      });
-    }
-
-    // Files exist
-    return res.status(200).json({ success: true, count: files.length, files });
-  });
-});
-
-app.get('/image/:filename', (req, res) => {
-  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
-    // Check if file
-    if (!file || file.length === 0) {
-      return res.status(404).json({
-        err: 'No file exists'
-      });
-    }
-
-    // Check if image
-    if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
-      // Read output to browser
-      const readstream = gfs.createReadStream(file.filename);
-      readstream.pipe(res);
-    } else {
-      res.status(404).json({
-        err: 'Not an image'
-      });
-    }
-  });
-});
-
-app.delete('/files/:id', (req, res) => {
-  gfs.remove({ _id: req.params.id, root: 'uploads' }, (err) => {
-    if (err) {
-      return res.status(404).json({ err: err });
-    }
-
-    res.status(200).json({ success: true, msg: 'File deleted' });
-  });
-});
-
-
-// =======SHIT ENDS HERE
+// =======SHIT ENDS HER
 
 app.post('/project', async (req, res) => {
   const project = await Project.create(req.body);
@@ -129,14 +78,14 @@ app.put('/project/:id/upload', upload.single('file'), async (req, res) => {
     return res.status(404).json({ success: false, msg: 'No such project found' })
   }
 
-  project.image = req.file.filename;
+  project.image = { ...req.file };
 
   await project.save();
 
   return res.status(201).json({ success: true, data: project })
 })
 
-app.get('/project/:id/image/:filename', async (req, res) => {
+app.get('/project/:id/file/:filename', async (req, res) => {
   const project = await Project.findById(req.params.id);
 
   if(!project){
@@ -161,6 +110,30 @@ app.get('/project/:id/image/:filename', async (req, res) => {
         err: 'Not an image'
       });
     }
+  });
+});
+
+app.get('/files', (req, res) => {
+  gfs.files.find().toArray((err, files) => {
+    // Check if files
+    if (!files || files.length === 0) {
+      return res.status(404).json({
+        err: 'No files exist'
+      });
+    }
+
+    // Files exist
+    return res.status(200).json({ success: true, count: files.length, files });
+  });
+});
+
+app.delete('/files/:id', (req, res) => {
+  gfs.remove({ _id: req.params.id, root: 'uploads' }, (err) => {
+    if (err) {
+      return res.status(404).json({ err: err });
+    }
+
+    res.status(200).json({ success: true, msg: 'File deleted' });
   });
 });
 
