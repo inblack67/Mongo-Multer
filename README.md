@@ -4,7 +4,7 @@ This web application lets user add projects and upload project's respective scre
 
 ## Stack
 
-This is a fullstack web application which is built on top of MERN with Context API State Managment, Hooks, ES6+ syntax along with Materialize CSS as the UI and Multer File Upload Package.
+This is a fullstack web application which is built on top of MERN with Context API State Managment, Hooks, ES6+ syntax along with Materialize CSS as the UI and packages like Multer File Upload, GridFS, axios etc.
 
 ## Website
 Checkout my website for my other JavaScript works. [Explore](https://inblack67.netlify.app/)
