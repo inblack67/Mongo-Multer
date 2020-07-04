@@ -8,6 +8,8 @@ const Grid = require('gridfs-stream');
 const path = require('path');
 const crypto = require('crypto');
 require('colors');
+const errorHandler = require('./middlewares/error');
+const asyncHandler = require('./middlewares/async');
 
 const app = express();
 app.use(express.json());
@@ -19,6 +21,7 @@ dotenv.config({ path: './config.env' });
 const connectDB = require('./db');
 connectDB();
 const Project = require('./model/Project');
+const project = require('./routes/project');
 
 // ==========SHIT STARTS HERE
 let conn = mongoose.connection;
@@ -59,84 +62,109 @@ const storage = new GridFsStorage({
 
 const upload = multer({ storage });
 
-// =======SHIT ENDS HER
+// app.post('/upload', upload.single('file'), (req, res) => {
+//     res.status(201).json({ success: true, data: req.file })
+// })
 
-app.post('/project', async (req, res) => {
-  const project = await Project.create(req.body);
-  return res.status(201).json({ success: true, data: project });
-})
+// app.get('/upload', (req, res) => {
+//   gfs.files.find().toArray((err, files) => {
+//     // Check if files
+//     if (!files || files.length === 0) {
+//       return res.status(404).json({
+//         err: 'No files exist'
+//       });
+//     }
 
-app.get('/project', async (req, res) => {
-  const projects = await Project.find();
-  return res.status(201).json({ success: true, data: projects });
-})
+//     // Files exist
+//     return res.status(200).json({ success: true, count: files.length, files });
+//   });
+// });
 
-app.put('/project/:id/upload', upload.single('file'), async (req, res) => {
-  const project = await Project.findById(req.params.id);
+// app.get('/image/:filename', (req, res) => {
+//   gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+//     // Check if file
+//     if (!file || file.length === 0) {
+//       return res.status(404).json({
+//         err: 'No file exists'
+//       });
+//     }
 
-  if(!project){
-    return res.status(404).json({ success: false, msg: 'No such project found' })
+//     // Check if image
+//     if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
+//       // Read output to browser
+//       const readstream = gfs.createReadStream(file.filename);
+//       readstream.pipe(res);
+//     } else {
+//       res.status(404).json({
+//         err: 'Not an image'
+//       });
+//     }
+//   });
+// });
+
+// app.delete('/files/:id', (req, res) => {
+//   gfs.remove({ _id: req.params.id, root: 'uploads' }, (err) => {
+//     if (err) {
+//       return res.status(404).json({ err: err });
+//     }
+
+//     res.status(200).json({ success: true, msg: 'File deleted' });
+//   });
+// });
+
+
+// =======SHIT ENDS HERE
+
+app.put('/project/:id/upload', upload.single('file'), asyncHandler(
+  async (req, res) => {
+    const project = await Project.findById(req.params.id);
+  
+    if(!project){
+      return res.status(404).json({ success: false, msg: 'No such project found' })
+    }
+  
+    project.image = req.file;
+  
+    await project.save();
+  
+    return res.status(201).json({ success: true, data: project })
   }
+))
 
-  project.image = { ...req.file };
-
-  await project.save();
-
-  return res.status(201).json({ success: true, data: project })
-})
-
-app.get('/project/:id/file/:filename', async (req, res) => {
-  const project = await Project.findById(req.params.id);
-
-  if(!project){
-    return res.status(404);
+app.get('/project/:id/image/:filename', asyncHandler(
+  async (req, res) => {
+    const project = await Project.findById(req.params.id);
+  
+    if(!project){
+      return res.status(404);
+    }
+  
+    gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+      // Check if file
+      if (!file || file.length === 0) {
+        return res.status(404).json({
+          err: 'No file exists'
+        });
+      }
+  
+      // Check if image
+      if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
+        // Read output to browser
+        const readstream = gfs.createReadStream(file.filename);
+        readstream.pipe(res);
+      } else {
+        res.status(404).json({
+          err: 'Not an image'
+        });
+      }
+    });
   }
+));
 
-  gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
-    // Check if file
-    if (!file || file.length === 0) {
-      return res.status(404).json({
-        err: 'No file exists'
-      });
-    }
+app.use('/project', project);
 
-    // Check if image
-    if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
-      // Read output to browser
-      const readstream = gfs.createReadStream(file.filename);
-      readstream.pipe(res);
-    } else {
-      res.status(404).json({
-        err: 'Not an image'
-      });
-    }
-  });
-});
 
-app.get('/files', (req, res) => {
-  gfs.files.find().toArray((err, files) => {
-    // Check if files
-    if (!files || files.length === 0) {
-      return res.status(404).json({
-        err: 'No files exist'
-      });
-    }
-
-    // Files exist
-    return res.status(200).json({ success: true, count: files.length, files });
-  });
-});
-
-app.delete('/files/:id', (req, res) => {
-  gfs.remove({ _id: req.params.id, root: 'uploads' }, (err) => {
-    if (err) {
-      return res.status(404).json({ err: err });
-    }
-
-    res.status(200).json({ success: true, msg: 'File deleted' });
-  });
-});
-
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

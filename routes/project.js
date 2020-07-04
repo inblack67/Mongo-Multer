@@ -1,13 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { addProject, getAllProjects } = require('../controllers/project');
-const { getAllFiles, fileUpload, getImage, deleteFile } = require('../controllers/upload');
+const { addProject, getAllProjects, deleteProject } = require('../controllers/project');
 
 router
 .post('/', addProject)
 .get('/', getAllProjects)
-.get('/:id/upload', getAllFiles)
-.get('/:id/file/:filename', getImage)
-.post('/:id/file/:fileId', deleteFile);
+.delete('/:id', deleteProject)
 
 module.exports = router;

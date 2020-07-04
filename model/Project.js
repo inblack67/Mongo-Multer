@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
+
 const ProjectSchema = mongoose.Schema({
     title: {
         type: String,
         required: true,
-        unique: true
     },
     description: {
         type: String,
@@ -15,7 +15,6 @@ const ProjectSchema = mongoose.Schema({
     },
     image: {
         type: Object,
-        default: {}
     },
     createdAt: {
         type: Date,
