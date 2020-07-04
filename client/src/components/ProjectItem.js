@@ -8,10 +8,10 @@ const ProjectItem = ({ project: { title, description, stack, image, _id }, loadi
     }
 
     return (
-        <div className="col s12">
+        <div className="col s12 m6 l6">
         <div className='card hoverable'>
             <div className="card-image">
-            { image && <img className='responsive-img' src={`/project/${_id}/image/${image.filename}`} alt=""/> }
+            { image && <img className='responsive-img' src={`/project/${_id}/image/${image.filename}`} alt="" style={{height: '25rem'}}/> }
             </div>
             <div className="card-content">
             <span className="card-title">
